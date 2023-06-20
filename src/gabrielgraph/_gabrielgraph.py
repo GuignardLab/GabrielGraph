@@ -13,7 +13,7 @@ def build_gabriel_graph(
     pos: np.ndarray,
     data_struct: str = "adj-dict",
     dist: bool = False,
-) -> Union(dict, np.ndarray):
+) -> dict | np.ndarray:
     """
     Build the gabriel graph of a set of nodes with
     associtated positions.
