@@ -5,9 +5,15 @@ import numpy as np
 from scipy.spatial import Delaunay
 from itertools import combinations
 import scipy as sp
+from typing import Union
 
 
-def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
+def build_gabriel_graph(
+    node_ids: np.ndarray,
+    pos: np.ndarray,
+    data_struct: str = "adj-dict",
+    dist: bool = False,
+) -> Union(dict, np.ndarray):
     """
     Build the gabriel graph of a set of nodes with
     associtated positions.
