@@ -6,6 +6,7 @@ from scipy.spatial import Delaunay
 from itertools import combinations
 import scipy as sp
 
+
 def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
     """
     Build the gabriel graph of a set of nodes with
@@ -30,9 +31,7 @@ def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
             to the list of neighboring node ids
     """
     if not data_struct in ["adj-dict", "adj-mat"]:
-        raise ValueError(
-            "Data structure for the Gabriel graph not understood"
-        )
+        raise ValueError("Data structure for the Gabriel graph not understood")
     tmp = Delaunay(pos)
     delaunay_graph = {}
 
@@ -55,10 +54,7 @@ def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
 
         final_GG = {}
         for e1, neighbs in Gabriel_graph.items():
-            final_GG[node_ids[e1]] = {
-                node_ids[ni]
-                for ni in neighbs
-            }
+            final_GG[node_ids[e1]] = {node_ids[ni] for ni in neighbs}
 
     elif data_struct.lower() == "adj-mat":
         X, Y, val = [], [], []
@@ -66,8 +62,7 @@ def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
             for ni in [n for n in neighbs if e1 < n]:
                 D = np.linalg.norm(pos[e1] - pos[ni])
                 if not any(
-                    np.linalg.norm((pos[ni] + pos[e1]) / 2 - pos[i])
-                    < D / 2
+                    np.linalg.norm((pos[ni] + pos[e1]) / 2 - pos[i]) < D / 2
                     for i in neighbs.intersection(delaunay_graph[ni])
                 ):
                     X.append(node_ids[e1])

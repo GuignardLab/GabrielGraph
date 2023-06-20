@@ -1,6 +1,7 @@
 from gabrielgraph import build_gabriel_graph
 import numpy as np
 
+
 def test_module():
     """You should write tests here!"""
     np.random.seed(0)
@@ -17,5 +18,5 @@ def test_module():
         5: {1, 4, 9},
         4: {5},
         9: {0, 5, 6},
-        6: {0, 3, 9}
+        6: {0, 3, 9},
     }
