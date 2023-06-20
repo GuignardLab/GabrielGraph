@@ -1,5 +1,6 @@
 """
-You should write your module/set of function/class(es) here
+A simple function to create a Gabriel Graph from a set of point and there indices
+For info: leo.guignard _at_ univ-amu.fr
 """
 import numpy as np
 from scipy.spatial import Delaunay
