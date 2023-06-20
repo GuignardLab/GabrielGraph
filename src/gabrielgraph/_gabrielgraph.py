@@ -20,7 +20,10 @@ def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
             'adj-mat' are supported.
             'adj-dict': Adjacency dictionary
             'adj-mat' : Adjacency matrix
-        dist (bool)
+        dist (bool): in the case of adjacency matrix, put the L2 norm
+            between the points if they are connected rather than True.
+            /!\ Note that if the distance is asked, for pratical reason
+            (because of sparse matrices), no connection is coded as 0. /!\
     Returns:
         final_GG (dict id: set([ids, ])): the gabriel graph as
             an adjacency list, a dictionary that maps node ids
@@ -52,13 +55,9 @@ def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
 
         final_GG = {}
         for e1, neighbs in Gabriel_graph.items():
-            neighbs = np.array(list(neighbs))
-            distances = np.linalg.norm(
-                pos[e1] - [pos[ni] for ni in neighbs], axis=1
-            )
             final_GG[node_ids[e1]] = {
                 node_ids[ni]
-                for ni in neighbs[distances <= 5 * np.median(distances)]
+                for ni in neighbs
             }
 
     elif data_struct.lower() == "adj-mat":
@@ -84,6 +83,5 @@ def build_gabriel_graph(node_ids, pos, data_struct="adj-dict", dist=False):
         final_GG = sp.sparse.coo_array(
             (val, (X, Y)), shape=(max(node_ids) + 1, max(node_ids) + 1)
         )
-        final_GG = final_GG.tocsr()
 
     return final_GG
