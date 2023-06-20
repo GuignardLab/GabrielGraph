@@ -30,7 +30,7 @@ def build_gabriel_graph(
         dist (bool): in the case of adjacency matrix, put the L2 norm
             between the points if they are connected rather than True.
             /!\ Note that if the distance is asked, for pratical reason
-            (because of sparse matrices), no connection is coded as 0. /!\
+            (because of sparse matrices), no connection is coded as 0. /!\\
     Returns:
         final_GG (dict id: set([ids, ])): the gabriel graph as
             an adjacency list, a dictionary that maps node ids
