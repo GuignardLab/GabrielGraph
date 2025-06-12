@@ -14,14 +14,35 @@ A small class to create Gabriel Graphs
 
 You can install `GabrielGraph` via [pip]:
 
-    pip install GabrielGraph
-
-
+```shell
+pip install GabrielGraph
+```
 
 To install latest development version :
 
-    pip install git+https://github.com/GuignardLab/GabrielGraph.git
+```shell
+pip install git+https://github.com/GuignardLab/GabrielGraph.git
+```
 
+## Tyical use
+
+```python
+from gabrielgraph import build_gabriel_graph
+import numpy as np
+
+np.random.seed(0)
+point_ids = np.arange(10)
+point_positions = np.random.random((10, 3))
+
+gg = build_gabriel_graph(point_ids, point_positions)
+
+gg[0] # {1, 2, 3, 6, 7, 9}
+
+gg = build_gabriel_graph(point_ids, point_positions, "adj-mat") # coo sparse array
+gg = gg.todok()  # to convert to dictionary of keys sparse array
+gg[0, 1] # True
+gg[0, 4] # False
+```
 
 ## Contributing
 

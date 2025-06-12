@@ -16,7 +16,7 @@ def build_gabriel_graph(
     pos: ArrayLike,
     data_struct: Literal["adj-dict", "adj-mat"] = "adj-dict",
     dist: bool = False,
-) -> dict[int, set[int]] | sp.sparse.sparray:
+) -> dict[int, set[int]] | sp.sparse.coo_array:
     """
     Build the gabriel graph of a set of nodes with
     associtated positions.
@@ -37,7 +37,7 @@ def build_gabriel_graph(
         in the case of adjacency matrix, put the L2 norm
         between the points if they are connected rather than True.
         /!\ Note that if the distance is asked, for pratical reason
-        (because of sparse matrices), no connection is coded as 0. /!\\
+        (because of sparse matrices), no connection is coded as 0. /!\
     
     Returns
     -------
@@ -45,7 +45,7 @@ def build_gabriel_graph(
         the gabriel graph as an adjacency list, a dictionary that maps node ids
         to the list of neighboring node ids
     OR
-    sparse array of size N x N
+    coo_array array of size N x N
         the gabriel graph as an adjacency matrix where
         `m[i, j]` is not `False` or `0` if `m[i, j]` are connected
         and `m[i, j]` is the distance between the nodes `i` and `j`
