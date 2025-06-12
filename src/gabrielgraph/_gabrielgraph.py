@@ -2,42 +2,56 @@
 A simple function to create a Gabriel Graph from a set of point and there indices
 For info: leo.guignard _at_ univ-amu.fr
 """
+
 import numpy as np
 from scipy.spatial import Delaunay
 from itertools import combinations
 import scipy as sp
-from typing import Union
+from typing import Literal, Sequence
+from numpy.typing import ArrayLike
 
 
 def build_gabriel_graph(
-    node_ids: np.ndarray,
-    pos: np.ndarray,
-    data_struct: str = "adj-dict",
+    node_ids: Sequence,
+    pos: ArrayLike,
+    data_struct: Literal["adj-dict", "adj-mat"] = "adj-dict",
     dist: bool = False,
-) -> Union[dict, np.ndarray]:
+) -> dict[int, set[int]] | sp.sparse.sparray:
     """
     Build the gabriel graph of a set of nodes with
     associtated positions.
 
-    Args:
-        node_ids ([int, ] (size n)): list of node ids
-        pos (n x m ndarray): ndarray of the positions where n is
-            the number of nodes and m is the spatial dimension
-        data_struct (str): in which type of data structure will
-            the graph be saved, currently either 'adj-dict' and
-            'adj-mat' are supported.
-            'adj-dict': Adjacency dictionary
-            'adj-mat' : Adjacency matrix
-        dist (bool): in the case of adjacency matrix, put the L2 norm
-            between the points if they are connected rather than True.
-            /!\ Note that if the distance is asked, for pratical reason
-            (because of sparse matrices), no connection is coded as 0. /!\\
-    Returns:
-        final_GG (dict id: set([ids, ])): the gabriel graph as
-            an adjacency list, a dictionary that maps node ids
-            to the list of neighboring node ids
+    Parameters
+    ----------
+    node_ids : Sequence of int of length N the number of points
+        list of node ids
+    pos : ArrayLike of size N x D
+        ndarray of the positions where N is the number of points
+        and D is the number of spatial dimensions
+    data_struct : {"adj-dict", "adj-mat"}
+        data structure in which type of data structure will
+        the graph will be returned.
+        'adj-dict': Adjacency dictionary
+        'adj-mat' : Adjacency matrix
+    dist : bool
+        in the case of adjacency matrix, put the L2 norm
+        between the points if they are connected rather than True.
+        /!\ Note that if the distance is asked, for pratical reason
+        (because of sparse matrices), no connection is coded as 0. /!\\
+    
+    Returns
+    -------
+    dict maps int to set of ints
+        the gabriel graph as an adjacency list, a dictionary that maps node ids
+        to the list of neighboring node ids
+    OR
+    sparse array of size N x N
+        the gabriel graph as an adjacency matrix where
+        `m[i, j]` is not `False` or `0` if `m[i, j]` are connected
+        and `m[i, j]` is the distance between the nodes `i` and `j`
+        if dist is True. Otherwise `m[i, j]` is `True`
     """
-    if not data_struct in ["adj-dict", "adj-mat"]:
+    if data_struct not in ["adj-dict", "adj-mat"]:
         raise ValueError("Data structure for the Gabriel graph not understood")
     tmp = Delaunay(pos)
     delaunay_graph = {}
