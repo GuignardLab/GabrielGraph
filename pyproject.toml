@@ -22,7 +22,7 @@ push = false
 "pyproject.toml" = [
     'current_version = "{version}"',
 ]
-"src/GabrielGraph/__init__.py" = [
+"src/gabrielgraph/__init__.py" = [
     '__version__ = "{version}"',
 ]
 "setup.cfg" = [
