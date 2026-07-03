@@ -53,7 +53,7 @@ def build_gabriel_graph(
     """
     if data_struct not in ["adj-dict", "adj-mat"]:
         raise ValueError("Data structure for the Gabriel graph not understood")
-    tmp = Delaunay(pos)
+    tmp = Delaunay(pos, qhull_options="QJ")
     delaunay_graph = {}
 
     for N in tmp.simplices:
