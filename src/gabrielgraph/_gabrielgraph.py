@@ -1,16 +1,17 @@
 """
-A simple function to create a Gabriel Graph from a set of point and there indices
+A simple function to create a Gabriel Graph from a set of points and
+their indices
 For info: leo.guignard _at_ univ-amu.fr
 """
 
 import warnings
+from itertools import combinations
+from typing import Literal, Sequence
 
 import numpy as np
-from scipy.spatial import Delaunay
-from itertools import combinations
 import scipy as sp
-from typing import Literal, Sequence
 from numpy.typing import ArrayLike
+from scipy.spatial import Delaunay, KDTree
 
 
 def build_gabriel_graph(
@@ -21,7 +22,7 @@ def build_gabriel_graph(
 ) -> dict[int, set[int]] | sp.sparse.coo_array:
     """
     Build the gabriel graph of a set of nodes with
-    associtated positions.
+    associated positions.
 
     Parameters
     ----------
@@ -46,16 +47,16 @@ def build_gabriel_graph(
     Returns
     -------
     dict maps int to set of ints
-        the gabriel graph as an adjacency list, a dictionary that maps node ids
-        to the list of neighboring node ids
+        the gabriel graph as an adjacency list, a dictionary that maps
+        node ids to the set of neighboring node ids
     OR
     coo_array array of size N x N
         the gabriel graph as an adjacency matrix where
-        `m[i, j]` is not `False` or `0` if `m[i, j]` are connected
-        and `m[i, j]` is the distance between the nodes `i` and `j`
-        if dist is True. Otherwise `m[i, j]` is `True`
+        `m[i, j]` is not `False` or `0` if the nodes `i` and `j` are
+        connected and `m[i, j]` is the distance between the nodes `i`
+        and `j` if dist is True. Otherwise `m[i, j]` is `True`
     """
-    if data_struct not in ["adj-dict", "adj-mat"]:
+    if data_struct.lower() not in ["adj-dict", "adj-mat"]:
         raise ValueError("Data structure for the Gabriel graph not understood")
     if dist and data_struct.lower() == "adj-dict":
         warnings.warn(
@@ -64,51 +65,43 @@ def build_gabriel_graph(
             UserWarning,
             stacklevel=2,
         )
-    tmp = Delaunay(pos, qhull_options="QJ")
-    delaunay_graph = {}
+    pos = np.asarray(pos, dtype=float)
+    tri = Delaunay(pos, qhull_options="QJ")
 
-    for N in tmp.simplices:
-        for e1, e2 in combinations(np.sort(N), 2):
-            delaunay_graph.setdefault(e1, set()).add(e2)
-            delaunay_graph.setdefault(e2, set()).add(e1)
+    # All unique Delaunay edges as an (E, 2) array with u < v.
+    vertex_pairs = list(combinations(range(tri.simplices.shape[1]), 2))
+    pairs = tri.simplices[:, vertex_pairs].reshape(-1, 2)
+    edges = np.unique(np.sort(pairs, axis=1), axis=0)
+
+    # A Delaunay edge is a Gabriel edge iff no site lies strictly inside
+    # its diametral ball. The endpoints sit exactly at distance r from
+    # the midpoint, so the edge is kept iff the nearest site to the
+    # midpoint is at distance >= r (closed-ball convention: points
+    # exactly on the sphere, up to a relative tolerance, do not
+    # disqualify the edge).
+    mid = pos[edges].mean(axis=1)
+    r = np.linalg.norm(pos[edges[:, 0]] - pos[edges[:, 1]], axis=1) / 2
+    nearest_d, _ = KDTree(pos).query(mid, k=1)
+    gabriel = nearest_d >= r * (1 - 1e-12)
+    gg_edges = edges[gabriel]
 
     if data_struct.lower() == "adj-dict":
-        Gabriel_graph = {}
-        for e1, neighbs in delaunay_graph.items():
-            for ni in neighbs:
-                if not any(
-                    np.linalg.norm((pos[ni] + pos[e1]) / 2 - pos[i])
-                    < np.linalg.norm(pos[ni] - pos[e1]) / 2
-                    for i in neighbs.intersection(delaunay_graph[ni])
-                ):
-                    Gabriel_graph.setdefault(e1, set()).add(ni)
-                    Gabriel_graph.setdefault(ni, set()).add(e1)
-
         final_GG = {}
-        for e1, neighbs in Gabriel_graph.items():
-            final_GG[node_ids[e1]] = {node_ids[ni] for ni in neighbs}
+        for u, v in gg_edges:
+            final_GG.setdefault(node_ids[u], set()).add(node_ids[v])
+            final_GG.setdefault(node_ids[v], set()).add(node_ids[u])
 
     elif data_struct.lower() == "adj-mat":
-        X, Y, val = [], [], []
-        for e1, neighbs in delaunay_graph.items():
-            for ni in [n for n in neighbs if e1 < n]:
-                D = np.linalg.norm(pos[e1] - pos[ni])
-                if not any(
-                    np.linalg.norm((pos[ni] + pos[e1]) / 2 - pos[i]) < D / 2
-                    for i in neighbs.intersection(delaunay_graph[ni])
-                ):
-                    X.append(node_ids[e1])
-                    Y.append(node_ids[ni])
-                    X.append(node_ids[ni])
-                    Y.append(node_ids[e1])
-                    if dist:
-                        val.append(D)
-                        val.append(D)
-                    else:
-                        val.append(True)
-                        val.append(True)
+        ids = np.asarray(node_ids)
+        u, v = gg_edges[:, 0], gg_edges[:, 1]
+        X = np.concatenate([ids[u], ids[v]])
+        Y = np.concatenate([ids[v], ids[u]])
+        if dist:
+            val = np.tile(2 * r[gabriel], 2)
+        else:
+            val = np.ones(2 * len(gg_edges), dtype=bool)
         final_GG = sp.sparse.coo_array(
-            (val, (X, Y)), shape=(max(node_ids) + 1, max(node_ids) + 1)
+            (val, (X, Y)), shape=(max(node_ids) + 1,) * 2
         )
 
     return final_GG
