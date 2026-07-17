@@ -3,6 +3,8 @@ A simple function to create a Gabriel Graph from a set of point and there indice
 For info: leo.guignard _at_ univ-amu.fr
 """
 
+import warnings
+
 import numpy as np
 from scipy.spatial import Delaunay
 from itertools import combinations
@@ -34,11 +36,13 @@ def build_gabriel_graph(
         'adj-dict': Adjacency dictionary
         'adj-mat' : Adjacency matrix
     dist : bool
-        in the case of adjacency matrix, put the L2 norm
-        between the points if they are connected rather than True.
-        /!\ Note that if the distance is asked, for pratical reason
-        (because of sparse matrices), no connection is coded as 0. /!\
-    
+        Only used when `data_struct` is 'adj-mat': store the L2 norm
+        between connected points instead of `True`.
+        Note that if the distance is asked, for practical reasons
+        (because of sparse matrices), no connection is coded as 0.
+        Ignored when `data_struct` is 'adj-dict'; passing `dist=True`
+        in that case raises a `UserWarning`.
+
     Returns
     -------
     dict maps int to set of ints
@@ -53,6 +57,13 @@ def build_gabriel_graph(
     """
     if data_struct not in ["adj-dict", "adj-mat"]:
         raise ValueError("Data structure for the Gabriel graph not understood")
+    if dist and data_struct.lower() == "adj-dict":
+        warnings.warn(
+            "`dist=True` is only supported with data_struct='adj-mat'; "
+            "it is ignored for 'adj-dict' output.",
+            UserWarning,
+            stacklevel=2,
+        )
     tmp = Delaunay(pos, qhull_options="QJ")
     delaunay_graph = {}
 
